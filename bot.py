@@ -1,10 +1,11 @@
 from pyrogram import Client
-from config import API_ID, API_HASH, BOT_TOKEN
-from handlers import personal, call_command
+from handlers import personal_command, call_command, unpersonal_command
 
-app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("mybot", api_id=12345, api_hash="your_api_hash", bot_token="your_bot_token")
 
-personal.add_handlers(app)
+# Register all handlers
+personal_command.add_handlers(app)
+unpersonal_command.add_handlers(app)
 call_command.add_handlers(app)
 
 app.run()
