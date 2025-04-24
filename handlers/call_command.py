@@ -13,9 +13,9 @@ def load_commands():
 
 def add_handlers(app: Client):
 
-    @app.on_message(filters.command(None) & filters.private)
+    @app.on_message(filters.regex(r"^/\w+") & filters.private)
     async def call_command(_, msg: Message):
         data = load_commands()
-        cmd = msg.text[1:].split()[0].lower()
+        cmd = msg.text.split()[0][1:].lower()
         if cmd in data:
             await msg.reply(data[cmd])
