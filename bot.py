@@ -16,19 +16,19 @@ app = Client(
     bot_token=config.BOT_TOKEN,
 )
 
-# /format bisa dipakai di mana pun (grup / PM / channel komentar)
-from pyrogram.filters import edited_message
 
-@app.on_message(filters.command("format", prefixes="/") & ~edited_message)
-async def format_cmd(_, msg):
-    await msg.reply_copy(TEMPLATE, quote=True)
-
+@app.on_message(filters.command("format", prefixes="/"))
 async def format_cmd(_, msg: Message):
-    # Kirim balasan sebagai "copy" agar muncul tombol "Copied"
+    # Abaikan jika ini pesan hasil edit supaya tidak terpanggil dua kali
+    if msg.edit_date:
+        return
+
+    # Kirim salinan supaya tombol “Copy” muncul (autocopy)
     await msg.reply_copy(
         text=TEMPLATE,
         quote=True
     )
+
 
 if __name__ == "__main__":
     print(">> FormatBot running – press Ctrl‑C to stop.")
