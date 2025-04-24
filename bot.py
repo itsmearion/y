@@ -6,7 +6,6 @@ API_ID = 24488567        # Ganti dengan API ID dari my.telegram.org
 API_HASH = "51bb44c94b468bd8955f9e2916ed1402"  # Ganti dengan API Hash
 BOT_TOKEN = "7674931376:AAHILgMWDqLsV-eKVJz4ARgETCIxC5B_Yi8"  # Ganti dengan token dari BotFather
 
-
 app = Client("personal_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 DATA_FILE = "personal_data.json"
@@ -44,9 +43,9 @@ async def unpersonal_handler(client, message):
     except Exception:
         await message.reply("Format salah. Gunakan: /unpersonal <keyword>")
 
-@app.on_message(filters.command(None))
+@app.on_message(filters.text & filters.regex(r"^/(\w+)(@[\w_]+)?$"))
 async def dynamic_command_handler(client, message):
-    command = message.text.lstrip("/").split()[0]
+    command = message.text.split()[0][1:].split("@")[0]  # ambil command tanpa /
     if command in personal_data:
         await message.reply(personal_data[command])
 
