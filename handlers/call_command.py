@@ -8,6 +8,8 @@ DB_FILE = "personal_commands.json"
 async def load_commands():
     if not os.path.exists(DB_FILE):
         return {}
+    if os.path.getsize(DB_FILE) == 0:  # Cek kalau file kosong
+        return {}
     with open(DB_FILE, "r") as f:
         return json.load(f)
 
