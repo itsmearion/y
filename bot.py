@@ -1,51 +1,52 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from pyrogram import Client, filters
+import json
+import os
 
-# Simpanan personal di memory
-personal_data = {}
+API_ID = 24488567        # Ganti dengan API ID dari my.telegram.org
+API_HASH = "51bb44c94b468bd8955f9e2916ed1402"  # Ganti dengan API Hash
+BOT_TOKEN = "7674931376:AAHILgMWDqLsV-eKVJz4ARgETCIxC5B_Yi8"  # Ganti dengan token dari BotFather
 
-# Simpan keyword
-async def personal(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) < 2:
-        await update.message.reply_text("Gunakan format: /personal <keyword> <isi>")
-        return
+app = Client("personal_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-    keyword = context.args[0]
-    value = ' '.join(context.args[1:])
-    personal_data[keyword] = value
-    await update.message.reply_text(f"Perintah /{keyword} disimpan!")
+DATA_FILE = "personal_data.json"
+if os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "r") as f:
+        personal_data = json.load(f)
+else:
+    personal_data = {}
 
-# Hapus keyword
-async def unpersonal(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) != 1:
-        await update.message.reply_text("Gunakan format: /unpersonal <keyword>")
-        return
+def save_data():
+    with open(DATA_FILE, "w") as f:
+        json.dump(personal_data, f)
 
-    keyword = context.args[0]
+@app.on_message(filters.command("personal"))
+async def add_personal(client, message):
+    try:
+        _, keyword, *value = message.text.split()
+        value = ' '.join(value)
+        personal_data[keyword] = value
+        save_data()
+        await message.reply(f"Perintah /{keyword} disimpan!")
+    except Exception:
+        await message.reply("Gunakan format: /personal <keyword> <isi>")
+
+@app.on_message(filters.command("unpersonal"))
+async def remove_personal(client, message):
+    try:
+        _, keyword = message.text.split()
+        if keyword in personal_data:
+            del personal_data[keyword]
+            save_data()
+            await message.reply(f"Perintah /{keyword} dihapus!")
+        else:
+            await message.reply("Keyword tidak ditemukan.")
+    except Exception:
+        await message.reply("Gunakan format: /unpersonal <keyword>")
+
+@app.on_message(filters.command(""))
+async def handle_keyword(client, message):
+    keyword = message.command[0]
     if keyword in personal_data:
-        del personal_data[keyword]
-        await update.message.reply_text(f"Perintah /{keyword} dihapus!")
-    else:
-        await update.message.reply_text("Keyword tidak ditemukan.")
+        await message.reply(personal_data[keyword])
 
-# Deteksi dan jalankan keyword
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.lstrip('/')
-    if text in personal_data:
-        await update.message.reply_text(personal_data[text])
-
-# Setup bot
-async def main():
-    app = ApplicationBuilder().token("YOUR_BOT_TOKEN").build()
-
-    app.add_handler(CommandHandler("personal", personal))
-    app.add_handler(CommandHandler("unpersonal", unpersonal))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.add_handler(MessageHandler(filters.COMMAND, handle_message))
-
-    print("Bot berjalan...")
-    await app.run_polling()
-
-if __name__ == '__main__':
-    import asyncio
-    asyncio.run(main())
+app.run()
