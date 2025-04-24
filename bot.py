@@ -20,7 +20,7 @@ def save_data():
         json.dump(personal_data, f)
 
 @app.on_message(filters.command("personal"))
-async def add_personal(client, message):
+async def personal_handler(client, message):
     try:
         _, keyword, *value = message.text.split()
         value = ' '.join(value)
@@ -28,10 +28,10 @@ async def add_personal(client, message):
         save_data()
         await message.reply(f"Perintah /{keyword} disimpan!")
     except Exception:
-        await message.reply("Gunakan format: /personal <keyword> <isi>")
+        await message.reply("Format salah. Gunakan: /personal <keyword> <isi>")
 
 @app.on_message(filters.command("unpersonal"))
-async def remove_personal(client, message):
+async def unpersonal_handler(client, message):
     try:
         _, keyword = message.text.split()
         if keyword in personal_data:
@@ -41,10 +41,10 @@ async def remove_personal(client, message):
         else:
             await message.reply("Keyword tidak ditemukan.")
     except Exception:
-        await message.reply("Gunakan format: /unpersonal <keyword>")
+        await message.reply("Format salah. Gunakan: /unpersonal <keyword>")
 
 @app.on_message(filters.command(""))
-async def handle_keyword(client, message):
+async def keyword_handler(client, message):
     keyword = message.command[0]
     if keyword in personal_data:
         await message.reply(personal_data[keyword])
