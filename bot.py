@@ -16,19 +16,11 @@ app = Client(
     bot_token=config.BOT_TOKEN,
 )
 
-
 @app.on_message(filters.command("format", prefixes="/"))
 async def format_cmd(_, msg: Message):
-    # Abaikan jika ini pesan hasil edit supaya tidak terpanggil dua kali
     if msg.edit_date:
         return
-
-    # Kirim salinan supaya tombol “Copy” muncul (autocopy)
-    await msg.reply_copy(
-        text=TEMPLATE,
-        quote=True
-    )
-
+    await msg.reply(TEMPLATE, quote=True)  # autocopy via reply
 
 if __name__ == "__main__":
     print(">> FormatBot running – press Ctrl‑C to stop.")
