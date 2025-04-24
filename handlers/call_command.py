@@ -1,21 +1,69 @@
-import json, os
-from pyrogram import filters
+import json
+import os
+from pyrogram import Client, filters
 from pyrogram.types import Message
 
-DATA_PATH = "storage/data.json"
+DB_FILE = "personal_commands.json"
 
-def load_data():
-    if not os.path.exists(DATA_PATH):
+async def load_commands():
+    if not os.path.exists(DB_FILE):
         return {}
-    with open(DATA_PATH, "r") as f:
+    async with open(DB_FILE, "r") as f:
         return json.load(f)
 
-def add_handlers(app):
-    @app.on_message(filters.regex(r"^/\w+"))
-    async def call_command(_, msg: Message):
-        text = msg.text or ""
-        trigger = text.split()[0][1:].lower()
-        data = load_data()
+async def save_commands(data):
+    async with open(DB_FILE, "w") as f:
+        json.dump(data, f)
 
-        if trigger in data:
-            await msg.reply(data[trigger], quote=True)
+def add_handlers(app: Client):
+
+    @app.on_message(filters.command("personal", ["/", "."]) & filters.text)
+    async def save_command(client: Client, message: Message):
+        parts = message.text.split(maxsplit=2)
+        if len(parts) < 3:
+            return await message.reply("Format: /personal <trigger> <pesan>")
+
+        trigger = parts[1].lower()
+        response = parts[2]
+        user_id = str(message.from_user.id)
+
+        data = await load_commands()
+        if user_id not in data:
+            data[user_id] = {}
+        data[user_id][trigger] = response
+        await save_commands(data)
+
+        await message.reply(f"Perintah /{trigger} disimpan untukmu!")
+
+    @app.on_message(filters.command("unpersonal", ["/", "."]) & filters.text)
+    async def delete_command(client: Client, message: Message):
+        parts = message.text.split(maxsplit=1)
+        if len(parts) < 2:
+            return await message.reply("Format: /unpersonal <trigger>")
+
+        trigger = parts[1].lower()
+        user_id = str(message.from_user.id)
+
+        data = await load_commands()
+        if user_id in data and trigger in data[user_id]:
+            del data[user_id][trigger]
+            await save_commands(data)
+            await message.reply(f"Perintah /{trigger} dihapus!")
+        else:
+            await message.reply(f"Tidak ditemukan perintah /{trigger} milikmu.")
+
+    @app.on_message(filters.text & (filters.private | filters.group))
+    async def respond_to_trigger(client: Client, message: Message):
+        if not message.text:
+            return
+
+        text = message.text.strip()
+        if not text.startswith(("/", ".")):
+            return
+
+        trigger = text[1:].lower()
+        user_id = str(message.from_user.id)
+
+        data = await load_commands()
+        if user_id in data and trigger in data[user_id]:
+            await message.reply(data[user_id][trigger])
