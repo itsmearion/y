@@ -8,11 +8,11 @@ DB_FILE = "personal_commands.json"
 async def load_commands():
     if not os.path.exists(DB_FILE):
         return {}
-    async with open(DB_FILE, "r") as f:
+    with open(DB_FILE, "r") as f:
         return json.load(f)
 
 async def save_commands(data):
-    async with open(DB_FILE, "w") as f:
+    with open(DB_FILE, "w") as f:
         json.dump(data, f)
 
 def add_handlers(app: Client):
@@ -21,7 +21,7 @@ def add_handlers(app: Client):
     async def save_command(client: Client, message: Message):
         parts = message.text.split(maxsplit=2)
         if len(parts) < 3:
-            return await message.reply("Format: /personal <trigger> <pesan>")
+            return await message.reply("Format: /personal <trigger> <reply>")
 
         trigger = parts[1].lower()
         response = parts[2]
@@ -33,7 +33,7 @@ def add_handlers(app: Client):
         data[user_id][trigger] = response
         await save_commands(data)
 
-        await message.reply(f"Perintah /{trigger} disimpan untukmu!")
+        await message.reply(f"Command /{trigger} saved!")
 
     @app.on_message(filters.command("unpersonal", ["/", "."]) & filters.text)
     async def delete_command(client: Client, message: Message):
@@ -48,17 +48,17 @@ def add_handlers(app: Client):
         if user_id in data and trigger in data[user_id]:
             del data[user_id][trigger]
             await save_commands(data)
-            await message.reply(f"Perintah /{trigger} dihapus!")
+            await message.reply(f"Command /{trigger} removed!")
         else:
-            await message.reply(f"Tidak ditemukan perintah /{trigger} milikmu.")
+            await message.reply(f"Command /{trigger} not found.")
 
-    @app.on_message(filters.text & (filters.private | filters.group))
-    async def respond_to_trigger(client: Client, message: Message):
+    @app.on_message(filters.text & (filters.group | filters.private))
+    async def handle_custom_command(client: Client, message: Message):
         if not message.text:
             return
 
         text = message.text.strip()
-        if not text.startswith(("/", ".")):
+        if not (text.startswith("/") or text.startswith(".")):
             return
 
         trigger = text[1:].lower()
