@@ -1,21 +1,21 @@
-from pyrogram import Client, filters
+import json, os
+from pyrogram import filters
 from pyrogram.types import Message
-import json
-import os
 
-DB_FILE = "storage.json"
+DATA_PATH = "storage/data.json"
 
-def load_commands():
-    if not os.path.exists(DB_FILE):
+def load_data():
+    if not os.path.exists(DATA_PATH):
         return {}
-    with open(DB_FILE, "r") as f:
+    with open(DATA_PATH, "r") as f:
         return json.load(f)
 
-def add_handlers(app: Client):
-
-    @app.on_message(filters.regex(r"^/\w+") & filters.private)
+def add_handlers(app):
+    @app.on_message(filters.regex(r"^/\w+"))
     async def call_command(_, msg: Message):
-        data = load_commands()
-        cmd = msg.text.split()[0][1:].lower()
-        if cmd in data:
-            await msg.reply(data[cmd])
+        text = msg.text or ""
+        trigger = text.split()[0][1:].lower()
+        data = load_data()
+
+        if trigger in data:
+            await msg.reply(data[trigger], quote=True)
